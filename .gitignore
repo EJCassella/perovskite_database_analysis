@@ -1,0 +1,3 @@
+# ignore subdirs
+notebooks/
+__pycache__/

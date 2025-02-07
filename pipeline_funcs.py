@@ -42,7 +42,7 @@ def transform(dataframe):
 
 def load(cleaned_dataframe):
   try:
-    cleaned_dataframe.to_csv('updated_cleaned_perovskite_database_data.csv')
+    cleaned_dataframe.to_csv('cleaned_perovskite_database_data.csv')
     logger.info('Cleaned data successfully saved.')
   except:
     logger.error('Cleaned data could not be saved.')

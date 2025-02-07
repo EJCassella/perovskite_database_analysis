@@ -1,3 +1,7 @@
 # ignore subdirs
 notebooks/
 __pycache__/
+
+# ignore notebooks
+
+*.ipynb

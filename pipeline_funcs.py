@@ -4,7 +4,9 @@ import os
 import logging
 
 from utils import setup_logger
-from cleaning_funcs import drop_stability_columns, drop_cols_with_50perc_missing_data, drop_reference_cols
+
+
+from cleaning_funcs import drop_stability_columns, drop_cols_with_50perc_missing_data, drop_reference_cols, drop_null_cells_modules, remove_metrics_outliers
 
 logger = setup_logger()
 
@@ -23,6 +25,8 @@ def transform(dataframe):
   dataframe = drop_stability_columns(dataframe)
   dataframe = drop_cols_with_50perc_missing_data(dataframe)
   dataframe = drop_reference_cols(dataframe)
+  dataframe = drop_null_cells_modules(dataframe)
+  dataframe = remove_metrics_outliers(dataframe)
 
   try:
     assert dataframe.shape[0] == initial_shape[0]
@@ -36,7 +40,7 @@ def transform(dataframe):
 
 def load(cleaned_dataframe):
   try:
-    cleaned_dataframe.to_csv('cleaned_perovskite_database_data.csv')
+    cleaned_dataframe.to_csv('updated_cleaned_perovskite_database_data.csv')
     logger.info('Cleaned data successfully saved.')
   except:
     logger.error('Cleaned data could not be saved.')

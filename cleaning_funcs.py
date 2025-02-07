@@ -52,3 +52,54 @@ def drop_reference_cols(dataframe):
   return dataframe
 
 
+def drop_null_cells_modules(dataframe):
+  """Drop rows that we don't know if it's a cell or a module.
+  
+  """
+  rows_to_drop = dataframe[dataframe['Module'].isnull()].index
+  logger.info(f'There are {len(rows_to_drop)} rows to drop which do not contain a cell or module type')
+  try:
+    dataframe = dataframe.drop(index=rows_to_drop, axis=0)
+  except KeyError:
+    logger.info('There are no entries without cell types, continuing.')
+  
+  return dataframe
+
+
+def remove_metrics_outliers(dataframe, whisker_size=1.5):
+  """Remove outlying values from PCE, Jsc, Voc and FF using whisker_size * IQR.
+  
+  """
+  cols_to_filter = ['JV_default_PCE', 'JV_default_FF', 'JV_default_Jsc', 'JV_default_Voc']
+
+
+  def determine_iqr(dataframe, col):
+    """Determine the IQR of a specified column in a dataframe
+    
+    """
+    q1 = dataframe[col].quantile(0.25)
+    q3 = dataframe[col].quantile(0.75)
+    iqr = q3 - q1
+
+    return q1, q3, iqr
+  
+  for col in cols_to_filter:
+    q1, q3, iqr = determine_iqr(dataframe, col)
+    filter = (dataframe[col] >= q1 - iqr*whisker_size) & (dataframe[col] <= q3 + iqr*whisker_size)
+    dataframe = dataframe.loc[filter]
+    logger.info(f'dataframe shape after removing {col} outliers: {dataframe.shape}')
+  
+  return dataframe
+
+
+
+
+
+
+#handle high cardinality of deposition method - spin, dipp, spray, evaporation, slot die, doctor blade, inkjet, 
+
+
+
+# merge ts80m with data
+# handle anomalous TS80m
+

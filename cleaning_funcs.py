@@ -1,4 +1,5 @@
 from utils import setup_logger
+import regex as re
 
 logger = setup_logger()
 
@@ -93,10 +94,49 @@ def remove_metrics_outliers(dataframe, whisker_size=1.5):
 
 
 
+def reduce_cardinality_perovskite_deposition(dataframe):
+  """Collapse the very large number of perovskite deposition methods into the most common techniques and collect the rest into an "Other" category. Add a new column so we retain the original information.
+  
+  
+  """
+  num_cats = dataframe['Perovskite_deposition_procedure'].nunique()
+  logger.info(f'Current number of deposition categories {num_cats}.')
 
+  #First, fill any NaN values with the most frequent
+  most_freq = dataframe['Perovskite_deposition_procedure'].mode()[0]
+  dataframe['Perovskite_deposition_procedure'] = dataframe['Perovskite_deposition_procedure'].fillna(most_freq)
 
+  #Collapse the multistep processes into the first step and strip excess whitespace
+  dataframe['Perovskite_deposition_procedure_grouped'] = [cat.replace('|', '>>').split('>>')[0].strip() if re.search('>>|\|', cat) else cat for cat in dataframe['Perovskite_deposition_procedure']]
 
-#handle high cardinality of deposition method - spin, dipp, spray, evaporation, slot die, doctor blade, inkjet, 
+  # Aggregate deposition methods and fix typos
+  deposition_dict = {'Ultrasonic spray': 'Spray-coating',
+ 'Electrospraying': 'Spray-coating',
+ 'Air brush spray': 'Spray-coating',
+ 'Spray-pyrolys': 'Spray-coating',
+ 'spin-coatng': 'Spin-coating',
+ 'Hot-casting': 'Spin-coating',
+ 'Dipp-coating': 'Dip-coating',
+ 'Co-evaporation': 'Evaporation',
+ 'Flash evaporation': 'Evaporation',
+ 'Vacuum flash evaporation': 'Evaporation',
+ 'PVD': 'Evaporation',
+ 'CVD': 'Evaporation',
+ 'Closed space sublimation': 'Evaporation',
+ 'Pulsed laser deposition': 'Evaporation',
+ 'Sputtering': 'Evaporation',
+  }
+  dataframe['Perovskite_deposition_procedure_grouped'].replace(deposition_dict, inplace=True)
+
+  #Get the top top 10 deposition procedures and collapse everything else into 'Other' 
+  top_10_deposition = dataframe['Perovskite_deposition_procedure_grouped'].value_counts(normalize=True).nlargest(10).index
+
+  dataframe['Perovskite_deposition_procedure_grouped'] = dataframe['Perovskite_deposition_procedure_grouped'].apply(lambda x: 'Other' if x not in top_10_deposition else x)
+
+  new_cats = dataframe['Perovskite_deposition_procedure_grouped'].nunique()
+  logger.info(f'Number of deposition categories after cleaning is {new_cats}')
+
+  return dataframe
 
 
 

@@ -2,11 +2,12 @@ import pandas as pd
 import numpy as np
 import os
 import logging
+import regex as re
 
 from utils import setup_logger
 
 
-from cleaning_funcs import drop_stability_columns, drop_cols_with_50perc_missing_data, drop_reference_cols, drop_null_cells_modules, remove_metrics_outliers
+from cleaning_funcs import drop_stability_columns, drop_cols_with_50perc_missing_data, drop_reference_cols, drop_null_cells_modules, remove_metrics_outliers, reduce_cardinality_perovskite_deposition
 
 logger = setup_logger()
 
@@ -27,6 +28,7 @@ def transform(dataframe):
   dataframe = drop_reference_cols(dataframe)
   dataframe = drop_null_cells_modules(dataframe)
   dataframe = remove_metrics_outliers(dataframe)
+  dataframe = reduce_cardinality_perovskite_deposition(dataframe)
 
   try:
     assert dataframe.shape[0] == initial_shape[0]

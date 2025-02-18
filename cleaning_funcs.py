@@ -1,5 +1,6 @@
 from utils import setup_logger
 import regex as re
+import sys
 
 logger = setup_logger()
 
@@ -67,13 +68,10 @@ def drop_null_cells_modules(dataframe):
   return dataframe
 
 
-def remove_metrics_outliers(dataframe, whisker_size=1.5):
+def remove_metrics_outliers(dataframe, *args, whisker_size=1.5):
   """Remove outlying values from PCE, Jsc, Voc and FF using whisker_size * IQR.
   
   """
-  cols_to_filter = ['JV_default_PCE', 'JV_default_FF', 'JV_default_Jsc', 'JV_default_Voc']
-
-
   def determine_iqr(dataframe, col):
     """Determine the IQR of a specified column in a dataframe
     
@@ -84,7 +82,7 @@ def remove_metrics_outliers(dataframe, whisker_size=1.5):
 
     return q1, q3, iqr
   
-  for col in cols_to_filter:
+  for col in args:
     q1, q3, iqr = determine_iqr(dataframe, col)
     filter = (dataframe[col] >= q1 - iqr*whisker_size) & (dataframe[col] <= q3 + iqr*whisker_size)
     dataframe = dataframe.loc[filter]
@@ -139,7 +137,19 @@ def reduce_cardinality_perovskite_deposition(dataframe):
   return dataframe
 
 
+def merge_TS80m_data(dataframe, ts80_datafile):
+  """Join the TS80m data to the cleaned dataframe using a left merge (keeping all cleaned dataframe entries.)
 
-# merge ts80m with data
-# handle anomalous TS80m
 
+  """
+  try:
+    ts80 = pd.read_csv(ts80_datafile, low_memory=False, index_col='Ref_ID', usecols=['Ref_ID', 'TS80m'])
+  except FileNotFoundError:
+    logger.info('Could not locate stability data file.')
+    sys.exit()
+  
+  logger.info(f'Merging TS80m data. Current dataframe shape is {dataframe.shape[1]} columns and {dataframe.shape[0]} rows.')
+  merged_df = pd.merge(dataframe, ts80, how='left', on='Ref_ID')
+  logger.info(f'Merged TS80m data. Merged dataframe shape is now {merged_df.shape[1]} columns and {merged_df.shape[0]} rows.')
+
+  return merged_df

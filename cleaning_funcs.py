@@ -1,6 +1,7 @@
 from utils import setup_logger
 import regex as re
 import sys
+import pandas as pd
 
 logger = setup_logger()
 
@@ -84,7 +85,10 @@ def remove_metrics_outliers(dataframe, *args, whisker_size=1.5):
   
   for col in args:
     q1, q3, iqr = determine_iqr(dataframe, col)
-    filter = (dataframe[col] >= q1 - iqr*whisker_size) & (dataframe[col] <= q3 + iqr*whisker_size)
+    if col == 'TS80m':
+      filter = ((dataframe[col] >= q1 - iqr*whisker_size) & (dataframe[col] <= q3 + iqr*whisker_size)) | (dataframe[col].isnull())
+    else:
+      filter = (dataframe[col] >= q1 - iqr*whisker_size) & (dataframe[col] <= q3 + iqr*whisker_size)
     dataframe = dataframe.loc[filter]
     logger.info(f'dataframe shape after removing {col} outliers: {dataframe.shape}')
   
